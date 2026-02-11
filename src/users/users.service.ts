@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Users } from './users.entity';
@@ -6,30 +6,61 @@ import { UpdateUserDto } from './users.dto';
 
 @Injectable()
 export class UsersService {
-  constructor(
-    @InjectRepository(Users)
-    private usersRepository: Repository<Users>,
-  ) {}
+    constructor(
+        @InjectRepository(Users)
+        private usersRepo: Repository<Users>,
+    ) {}
 
-  async insert(body: { name: string; email: string }): Promise<Users> {
-    const user = this.usersRepository.create(body);
-    return this.usersRepository.save(user);
-  }
+     // Check database backend
 
-  async findAll(): Promise<Users[]> {
-    return this.usersRepository.find(); // always returns an array
-  }
+    async checkdb(): Promise<string> {
+        try {
+            await this.usersRepo.query('SELECT 1');
+            return 'Database connected successfully';
+        } catch (error) {
+            return `Database connection failed: ${error.message}`;
+        }
+    }
 
-  async findOne(id: number): Promise<Users> {
-    return this.usersRepository.findOneBy({ id });
-  }
+    // Insert data to database backend
 
-  async update(id: number, updateUserDto: UpdateUserDto): Promise<Users> {
-    await this.usersRepository.update(id, updateUserDto);
-    return this.findOne(id);
-  }
+    async insert(body: { name: string; email: string }): Promise<Users> {
+        const user = this.usersRepo.create(body);
+        return await this.usersRepo.save(user);
+    }
 
-  async delete(id: number): Promise<void> {
-    await this.usersRepository.delete(id);
-  }
+     // display all users from database backend
+
+    async findAll(): Promise<Users[]> {
+        return await this.usersRepo.find();
+    }
+
+    // To select specific id with info to update data backend
+
+    async findOne1(id: number): Promise<Users> {
+        const user = await this.usersRepo.findOne({ where: { id } });
+        
+        if (!user) {
+            throw new NotFoundException(`User with ID ${id} not found`);
+        }
+        
+        return user;
+    }
+
+
+    // To execute or save new updated data backend
+
+    async update(id: number, updateUserDto: UpdateUserDto): Promise<Users> {
+        const user = await this.findOne1(id);
+        Object.assign(user, updateUserDto);
+        return await this.usersRepo.save(user);
+    }
+
+    // To delete Data in the database backend
+
+    async delete(id: number): Promise<{ message: string }> {
+        const user = await this.findOne1(id); // Check if user exists
+        await this.usersRepo.remove(user);
+        return { message: `User with ID ${id} deleted successfully` };
+    }
 }
