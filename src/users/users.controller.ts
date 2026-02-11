@@ -5,44 +5,40 @@ import { Users } from './users.entity';
 
 @Controller('users')
 export class UsersController {
-    constructor(private readonly userservice: UsersService) { }
+  constructor(private readonly usersService: UsersService) {}
 
-    // Check database connection
-    @Get('db')
-    async checkdatabase(): Promise<string> {
-        return await this.userservice.checkdb();
-    }
+  // Insert user
+  @Post('users')
+  async insert(@Body() body: { name: string; email: string }): Promise<Users> {
+    return this.usersService.insert(body);
+  }
 
-    // Insert users info
-    @Post('users')
-    async insert(@Body() body: { name: string; email: string }): Promise<Users> {
-        return await this.userservice.insert(body);
-    }
+  // Display all users
+  @Get('display')
+  async findAll(): Promise<Users[]> {
+    const users = await this.usersService.findAll();
+    return users || []; // always return array
+  }
 
-    // display all users
-    @Get('display')
-    async findAll(): Promise<Users[]> {
-        return await this.userservice.findAll();
-    }
+  // Get single user
+  @Get(':id')
+  async findOne(@Param('id') id: string): Promise<Users> {
+    return this.usersService.findOne(+id);
+  }
 
-    // Get single user
-    @Get(':id')
-    findOne(@Param('id') id: string): Promise<Users> {
-        return this.userservice.findOne1(+id);
-    }
+  // Update user
+  @Patch(':id')
+  async update(
+    @Param('id') id: string,
+    @Body() updateUserDto: UpdateUserDto,
+  ): Promise<Users> {
+    return this.usersService.update(+id, updateUserDto);
+  }
 
-    // Update user
-    @Patch(':id')
-    update(
-        @Param('id') id: string,
-        @Body() updateUserDto: UpdateUserDto,
-    ): Promise<Users> {
-        return this.userservice.update(+id, updateUserDto);
-    }
-
-    // Delete user
-    @Delete(':id')
-    delete(@Param('id') id: string): Promise<{ message: string }> {
-        return this.userservice.delete(+id);
-    }
+  // Delete user
+  @Delete(':id')
+  async delete(@Param('id') id: string): Promise<{ message: string }> {
+    await this.usersService.delete(+id);
+    return { message: 'User deleted successfully' };
+  }
 }

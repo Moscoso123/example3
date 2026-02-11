@@ -15,7 +15,7 @@
 <script>
 form.onsubmit = async e =>{
     e.preventDefault();
-  const res = await fetch('http://localhost:3000/users/users', {
+  const res = await fetch('nestjsproject-production-a75d.up.railway.app/users/users', {
      method: 'POST',
      headers: {'Content-Type': 'application/json'},
      body: JSON.stringify({
@@ -51,7 +51,7 @@ form.onsubmit = async e =>{
 <script>
 const getEl = id => document.getElementById(id);
 
-fetch('http://localhost:3000/users/display')
+fetch('nestjsproject-production-a75d.up.railway.app/users/display')
     .then(response => response.json())
     .then(users => {
         getEl('tableBody').innerHTML = users.map(user => `
@@ -79,7 +79,7 @@ function editUser(id) {
 
 async function saveUser(id) {
     try {
-        const response = await fetch(`http://localhost:3000/users/${id}`, {
+        const response = await fetch(`nestjsproject-production-a75d.up.railway.app/users/${id}`, {
             method: 'PATCH',
             headers: {
                 'Content-Type': 'application/json'
@@ -108,7 +108,7 @@ async function saveUser(id) {
 
 
 function cancelEdit(id) {
-    fetch(`http://localhost:3000/users/${id}`)
+    fetch(`nestjsproject-production-a75d.up.railway.app/users/${id}`)
         .then(response => response.json())
         .then(user => {
             getEl(`name-${id}`).innerHTML = user.name;
@@ -123,7 +123,7 @@ async function deleteUser(id) {
     if (!confirm('Are you sure you want to delete this user?')) return;
     
     try {
-        await fetch(`http://localhost:3000/users/${id}`, {
+        await fetch(`nestjsproject-production-a75d.up.railway.app/users/${id}`, {
             method: 'DELETE'
         });
         
