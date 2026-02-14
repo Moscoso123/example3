@@ -38,7 +38,7 @@ form.onsubmit = async e => {
                 name: getEl('name').value,
                 email: getEl('email').value
             })
-        });
+        }); 
         if (!res.ok) throw new Error('Insert failed');
         alert('Data inserted successfully!');
         loadUsers(); // refresh table
