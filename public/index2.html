@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html>
+<body>
+
+<h1>INSERT DATA</h1>
+<form id="form">
+    <input id="name" placeholder="Name"><br>
+    <input id="email" placeholder="Email" type="email"><br>
+    <button>Insert</button>
+</form>
+
+<h1>DISPLAY DATA / UPDATE / DELETE DATA</h1>
+<table border="1">
+    <thead>
+        <tr>
+            <th>ID</th>
+            <th>Name</th>
+            <th>Email</th>
+            <th>Actions</th>
+        </tr>
+    </thead>
+    <tbody id="tableBody"></tbody>
+</table>
+
+<script>
+const BASE_URL = 'https://example3-production.up.railway.app';
+const getEl = id => document.getElementById(id);
+
+// Insert data
+const form = getEl('form');
+form.onsubmit = async e => {
+    e.preventDefault();
+    try {
+        const res = await fetch(`${BASE_URL}/users/users`, {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({
+                name: getEl('name').value,
+                email: getEl('email').value
+            })
+        }); 
+        if (!res.ok) throw new Error('Insert failed');
+        alert('Data inserted successfully!');
+        loadUsers(); // refresh table
+    } catch (err) {
+        console.error(err);
+        alert('Insert failed');
+    }
+};
+
+// Load users
+async function loadUsers() {
+    try {
+        const res = await fetch(`${BASE_URL}/users/display`);
+        const users = await res.json();
+        if (!Array.isArray(users)) {
+            getEl('tableBody').innerHTML = '<tr><td colspan="4">No data available</td></tr>';
+            return;
+        }
+        getEl('tableBody').innerHTML = users.map(user => `
+            <tr id="row-${user.id}">
+                <td>${user.id}</td>
+                <td id="name-${user.id}">${user.name}</td>
+                <td id="email-${user.id}">${user.email}</td>
+                <td>
+                    <button onclick="editUser(${user.id})">Edit</button>
+                    <button onclick="saveUser(${user.id})" id="save-${user.id}" hidden>Save</button>
+                    <button onclick="cancelEdit(${user.id})" id="cancel-${user.id}" hidden>Cancel</button>
+                    <button onclick="deleteUser(${user.id})" style="color:red;">Delete</button>
+                </td>
+            </tr>
+        `).join('');
+    } catch (err) {
+        console.error(err);
+        getEl('tableBody').innerHTML = '<tr><td colspan="4">Failed to load data</td></tr>';
+    }
+}
+
+// Initial load
+loadUsers();
+
+// Edit, Save, Cancel, Delete functions
+function editUser(id) {
+    getEl(`name-${id}`).innerHTML = `<input id="edit-name-${id}" value="${getEl(`name-${id}`).innerText}">`;
+    getEl(`email-${id}`).innerHTML = `<input id="edit-email-${id}" value="${getEl(`email-${id}`).innerText}">`;
+    getEl(`save-${id}`).hidden = false;
+    getEl(`cancel-${id}`).hidden = false;
+}
+
+async function saveUser(id) {
+    try {
+        const res = await fetch(`${BASE_URL}/users/${id}`, {
+            method: 'PATCH',
+            headers: {'Content-Type':'application/json'},
+            body: JSON.stringify({
+                name: getEl(`edit-name-${id}`).value,
+                email: getEl(`edit-email-${id}`).value
+            })
+        });
+        if (!res.ok) throw new Error('Update failed');
+        const user = await res.json();
+        getEl(`name-${id}`).innerText = user.name;
+        getEl(`email-${id}`).innerText = user.email;
+        getEl(`save-${id}`).hidden = true;
+        getEl(`cancel-${id}`).hidden = true;
+        alert('User updated!');
+    } catch(err) {
+        console.error(err);
+        alert('Update failed');
+        cancelEdit(id);
+    }
+}
+
+function cancelEdit(id) {
+    fetch(`${BASE_URL}/users/${id}`)
+        .then(res => res.json())
+        .then(user => {
+            getEl(`name-${id}`).innerText = user.name;
+            getEl(`email-${id}`).innerText = user.email;
+            getEl(`save-${id}`).hidden = true;
+            getEl(`cancel-${id}`).hidden = true;
+        });
+}
+
+async function deleteUser(id) {
+    if (!confirm('Are you sure?')) return;
+    try {
+        const res = await fetch(`${BASE_URL}/users/${id}`, { method: 'DELETE' });
+        if (!res.ok) throw new Error('Delete failed');
+        getEl(`row-${id}`).remove();
+        alert('User deleted successfully!');
+    } catch(err) {
+        console.error(err);
+        alert('Delete failed');
+    }
+}
+</script>
+
+</body>
+</html>

@@ -1,140 +1,197 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BSIT Class Management System</title>
+    <link rel="stylesheet" href="styles.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
 <body>
+    <!-- Animated Background -->
+    <div class="background">
+        <div class="gradient-bg"></div>
+        <div class="shapes">
+            <div class="shape"></div>
+            <div class="shape"></div>
+            <div class="shape"></div>
+            <div class="shape"></div>
+        </div>
+    </div>
 
-<h1>INSERT DATA</h1>
-<form id="form">
-    <input id="name" placeholder="Name"><br>
-    <input id="email" placeholder="Email" type="email"><br>
-    <button>Insert</button>
-</form>
+    <!-- Main Container -->
+    <div class="container">
+        <!-- Header Section -->
+        <header class="header">
+            <div class="logo-container">
+                <i class="fas fa-code-branch logo-icon"></i>
+                <h1 class="title">BSIT Class Repository Manager</h1>
+            </div>
+            <p class="subtitle">Manage your class repositories, system URLs, and team members in one place</p>
+            <div class="header-stats" id="headerStats">
+                <!-- Stats will be loaded dynamically -->
+            </div>
+        </header>
 
-<h1>DISPLAY DATA / UPDATE / DELETE DATA</h1>
-<table border="1">
-    <thead>
-        <tr>
-            <th>ID</th>
-            <th>Name</th>
-            <th>Email</th>
-            <th>Actions</th>
-        </tr>
-    </thead>
-    <tbody id="tableBody"></tbody>
-</table>
+        <!-- Classes Grid Section -->
+        <section class="classes-section">
+            <div class="section-header">
+                <h2><i class="fas fa-folder-open"></i> Available Classes</h2>
+                <div class="view-options">
+                    <button class="view-btn active" onclick="setViewMode('grid')">
+                        <i class="fas fa-th-large"></i> Grid
+                    </button>
+                    <button class="view-btn" onclick="setViewMode('list')">
+                        <i class="fas fa-list"></i> List
+                    </button>
+                </div>
+            </div>
+            
+            <div class="classes-grid" id="classesGrid">
+                <!-- Classes will be loaded dynamically -->
+                <div class="loading-spinner">
+                    <i class="fas fa-spinner fa-spin"></i> Loading classes...
+                </div>
+            </div>
+        </section>
 
-<script>
-const BASE_URL = 'https://example3-production.up.railway.app';
-const getEl = id => document.getElementById(id);
+        <!-- Quick Actions -->
+        <div class="quick-actions">
+            <button class="action-btn" onclick="refreshData()">
+                <i class="fas fa-sync-alt"></i> Refresh
+            </button>
+            <button class="action-btn" onclick="showStats()">
+                <i class="fas fa-chart-bar"></i> Statistics
+            </button>
+        </div>
+    </div>
 
-// Insert data
-const form = getEl('form');
-form.onsubmit = async e => {
-    e.preventDefault();
-    try {
-        const res = await fetch(`${BASE_URL}/users/users`, {
-            method: 'POST',
-            headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify({
-                name: getEl('name').value,
-                email: getEl('email').value
-            })
-        }); 
-        if (!res.ok) throw new Error('Insert failed');
-        alert('Data inserted successfully!');
-        loadUsers(); // refresh table
-    } catch (err) {
-        console.error(err);
-        alert('Insert failed');
-    }
-};
+    <!-- Class Details Modal -->
+    <div id="classModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="modalClassName"></h2>
+                <span class="close">&times;</span>
+            </div>
+            
+            <div class="modal-body">
+                <!-- Repository Information -->
+                <div class="info-section">
+                    <h3><i class="fas fa-code"></i> Repository Information</h3>
+                    <div class="form-group">
+                        <label for="gitRepository">
+                            <i class="fab fa-github"></i> Git Repository URL
+                        </label>
+                        <div class="input-with-icon">
+                            <input type="url" id="gitRepository" placeholder="https://github.com/username/repository">
+                            <button class="test-btn" onclick="testUrl('git')" title="Test URL">
+                                <i class="fas fa-external-link-alt"></i>
+                            </button>
+                        </div>
+                    </div>
 
-// Load users
-async function loadUsers() {
-    try {
-        const res = await fetch(`${BASE_URL}/users/display`);
-        const users = await res.json();
-        if (!Array.isArray(users)) {
-            getEl('tableBody').innerHTML = '<tr><td colspan="4">No data available</td></tr>';
-            return;
-        }
-        getEl('tableBody').innerHTML = users.map(user => `
-            <tr id="row-${user.id}">
-                <td>${user.id}</td>
-                <td id="name-${user.id}">${user.name}</td>
-                <td id="email-${user.id}">${user.email}</td>
-                <td>
-                    <button onclick="editUser(${user.id})">Edit</button>
-                    <button onclick="saveUser(${user.id})" id="save-${user.id}" hidden>Save</button>
-                    <button onclick="cancelEdit(${user.id})" id="cancel-${user.id}" hidden>Cancel</button>
-                    <button onclick="deleteUser(${user.id})" style="color:red;">Delete</button>
-                </td>
-            </tr>
-        `).join('');
-    } catch (err) {
-        console.error(err);
-        getEl('tableBody').innerHTML = '<tr><td colspan="4">Failed to load data</td></tr>';
-    }
-}
+                    <div class="form-group">
+                        <label for="systemUrl">
+                            <i class="fas fa-globe"></i> System URL
+                        </label>
+                        <div class="input-with-icon">
+                            <input type="url" id="systemUrl" placeholder="https://your-system-domain.com">
+                            <button class="test-btn" onclick="testUrl('system')" title="Test URL">
+                                <i class="fas fa-external-link-alt"></i>
+                            </button>
+                        </div>
+                    </div>
 
-// Initial load
-loadUsers();
+                    <button onclick="saveClassDetails()" class="btn-primary">
+                        <i class="fas fa-save"></i> Save Repository Details
+                    </button>
+                </div>
 
-// Edit, Save, Cancel, Delete functions
-function editUser(id) {
-    getEl(`name-${id}`).innerHTML = `<input id="edit-name-${id}" value="${getEl(`name-${id}`).innerText}">`;
-    getEl(`email-${id}`).innerHTML = `<input id="edit-email-${id}" value="${getEl(`email-${id}`).innerText}">`;
-    getEl(`save-${id}`).hidden = false;
-    getEl(`cancel-${id}`).hidden = false;
-}
+                <!-- Members Section -->
+                <div class="info-section">
+                    <h3><i class="fas fa-users"></i> Team Members</h3>
+                    
+                    <div class="add-member-form">
+                        <div class="form-row">
+                            <div class="form-group">
+                                <input type="text" id="memberName" placeholder="Enter member full name">
+                            </div>
+                            <div class="form-group">
+                                <select id="memberRole">
+                                    <option value="">Select Role</option>
+                                    <option value="Team Leader">Team Leader</option>
+                                    <option value="Developer">Developer</option>
+                                    <option value="Designer">Designer</option>
+                                    <option value="Tester">Tester</option>
+                                    <option value="Documentation">Documentation</option>
+                                </select>
+                            </div>
+                            <button onclick="addMember()" class="btn-secondary">
+                                <i class="fas fa-user-plus"></i> Add
+                            </button>
+                        </div>
+                    </div>
 
-async function saveUser(id) {
-    try {
-        const res = await fetch(`${BASE_URL}/users/${id}`, {
-            method: 'PATCH',
-            headers: {'Content-Type':'application/json'},
-            body: JSON.stringify({
-                name: getEl(`edit-name-${id}`).value,
-                email: getEl(`edit-email-${id}`).value
-            })
-        });
-        if (!res.ok) throw new Error('Update failed');
-        const user = await res.json();
-        getEl(`name-${id}`).innerText = user.name;
-        getEl(`email-${id}`).innerText = user.email;
-        getEl(`save-${id}`).hidden = true;
-        getEl(`cancel-${id}`).hidden = true;
-        alert('User updated!');
-    } catch(err) {
-        console.error(err);
-        alert('Update failed');
-        cancelEdit(id);
-    }
-}
+                    <div class="members-list-container">
+                        <h4>Current Members <span class="member-count-badge" id="memberCount">0</span></h4>
+                        <div class="members-list" id="membersList">
+                            <!-- Members will be loaded here -->
+                        </div>
+                    </div>
+                </div>
 
-function cancelEdit(id) {
-    fetch(`${BASE_URL}/users/${id}`)
-        .then(res => res.json())
-        .then(user => {
-            getEl(`name-${id}`).innerText = user.name;
-            getEl(`email-${id}`).innerText = user.email;
-            getEl(`save-${id}`).hidden = true;
-            getEl(`cancel-${id}`).hidden = true;
-        });
-}
+                <!-- Class Statistics -->
+                <div class="info-section stats-section">
+                    <h3><i class="fas fa-chart-pie"></i> Class Statistics</h3>
+                    <div class="stats-grid" id="classStats">
+                        <!-- Stats will be loaded here -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
 
-async function deleteUser(id) {
-    if (!confirm('Are you sure?')) return;
-    try {
-        const res = await fetch(`${BASE_URL}/users/${id}`, { method: 'DELETE' });
-        if (!res.ok) throw new Error('Delete failed');
-        getEl(`row-${id}`).remove();
-        alert('User deleted successfully!');
-    } catch(err) {
-        console.error(err);
-        alert('Delete failed');
-    }
-}
-</script>
+    <!-- Statistics Modal -->
+    <div id="statsModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2><i class="fas fa-chart-bar"></i> System Statistics</h2>
+                <span class="close" onclick="closeStatsModal()">&times;</span>
+            </div>
+            <div class="modal-body">
+                <div class="stats-dashboard" id="statsDashboard">
+                    <!-- Stats will be loaded here -->
+                </div>
+            </div>
+        </div>
+    </div>
 
+    <!-- Confirmation Modal -->
+    <div id="confirmModal" class="modal">
+        <div class="modal-content confirm-modal">
+            <div class="modal-header">
+                <h2><i class="fas fa-exclamation-triangle"></i> Confirm Action</h2>
+            </div>
+            <div class="modal-body">
+                <p id="confirmMessage">Are you sure you want to proceed?</p>
+                <div class="confirm-actions">
+                    <button class="btn-cancel" onclick="closeConfirmModal()">Cancel</button>
+                    <button class="btn-confirm" id="confirmActionBtn">Confirm</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Notification -->
+    <div id="toast" class="toast">
+        <div class="toast-content">
+            <i class="toast-icon"></i>
+            <span class="toast-message"></span>
+        </div>
+    </div>
+
+    <!-- JavaScript -->
+    <script src="script.js"></script>
 </body>
 </html>
